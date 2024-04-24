@@ -9,26 +9,38 @@ export const runCode = async (webR: WebR) => {
   const terminal = document.getElementById("console")!;
 
   for (const line of lines) {
+    const isAssignment = new RegExp(/^\w+\s*(<-|=)(.*)/).test(line.trim());
+
     const shelter = await new webR.Shelter();
 
     terminal.innerHTML =
       terminal.innerHTML +
       html`<div>
-        <span class="opacity-50 select-none mr-1">&gt;</span>${line}
+        <span class="opacity-40 select-none mr-1">&gt;</span>${line}
       </div>`;
 
     const result = await shelter.captureR(line);
+
+    if (isAssignment) {
+      continue;
+    }
 
     const stdout = result.output
       .filter((x) => x.type === "stdout")
       .map((x) => x.data);
 
     for (const out of stdout) {
-      terminal.innerHTML =
-        terminal.innerHTML + terminal.append(html`<div>${out}</div>`);
+      terminal.innerHTML = terminal.innerHTML + html`<div>${out}</div>`;
     }
 
-    console.log(result);
-    console.log(await result.result.toJs());
+    const resultJs = await result.result.toJs();
+
+    if (resultJs.type === "character") {
+      console.log(resultJs);
+      for (const out of resultJs.values) {
+        terminal.innerHTML =
+          terminal.innerHTML + html`<div class="opacity-70">${out}</div>`;
+      }
+    }
   }
 };

@@ -13,7 +13,7 @@ const webR = new WebR();
 await webR.init();
 
 document.querySelector<HTMLDivElement>("#app")!.innerHTML = html`
-  <div class="w-full h-full">
+  <div class="w-full h-full flex flex-col">
     <div
       class="flex items-center monaco-component opacity-90 py-2 px-4"
       ${styles({ backgroundColor: "var(--vscode-editor-background)" })}
@@ -26,11 +26,11 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = html`
         </select>
       </div>
     </div>
-    <div class="flex flex-col h-full">
+    <div class="flex flex-col flex-1">
       <div id="editor" class="flex-1 w-full"></div>
       <div
         id="console"
-        class="h-[300px] w-full monaco-component opacity-90 p-4 font-mono"
+        class="h-[300px] w-full monaco-component opacity-90 p-4 font-mono overflow-y-auto"
         ${styles({
           backgroundColor: "var(--vscode-editor-background)",
           color: "var(--vscode-editor-foreground)",
