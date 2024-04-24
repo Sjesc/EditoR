@@ -1,0 +1,37 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body,
+#app {
+  height: 100%;
+}
+
+.custom-select {
+  min-width: 350px;
+  position: relative;
+}
+
+select {
+  appearance: none;
+  /*  safari  */
+  -webkit-appearance: none;
+  /*  other styles for aesthetics */
+  width: 100%;
+  padding-left: 0.5rem;
+  background-color: var(--vscode-editor-background);
+  filter: brightness(85%);
+  border-radius: 0.25rem;
+  color: var(--vscode-editor-foreground);
+  cursor: pointer;
+}
+
+button {
+  background-color: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+  border: none;
+  padding: 0.1rem 1rem;
+  border-radius: 0.25rem;
+  cursor: pointer;
+}

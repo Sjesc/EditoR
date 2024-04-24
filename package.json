@@ -1,0 +1,24 @@
+{
+  "name": "r-editor",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.79",
+    "autoprefixer": "^10.4.19",
+    "postcss": "^8.4.38",
+    "typescript": "^5.2.2",
+    "vite": "^5.2.0"
+  },
+  "dependencies": {
+    "monaco-editor": "^0.48.0",
+    "monaco-themes": "^0.4.4",
+    "tailwindcss": "^3.4.3",
+    "webr": "^0.3.2"
+  }
+}
