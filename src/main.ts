@@ -42,12 +42,29 @@ updateComponent(
   `
 );
 
-setupEditor();
+setupEditor(webR);
 
 const runCodeButton = getComponent<HTMLButtonElement>("runCode");
-runCodeButton.onclick = runCode.bind(this, webR);
+runCodeButton.addEventListener("click", runCode);
 
 export const state = {
   monaco: monaco,
   webR: webR,
 } as const;
+
+for (;;) {
+  const output = await webR.read();
+  switch (output.type) {
+    case "stdout":
+      console.log(output.data);
+      break;
+    case "stderr":
+      console.error(output.data);
+      break;
+    case "prompt":
+      console.log(output.data);
+      break;
+    default:
+      console.warn(`Unhandled output type: ${output.type}.`);
+  }
+}

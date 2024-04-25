@@ -1,108 +1,98 @@
-import { WebR } from "webr";
-import { html } from "../helpers";
-import Monaco, { themes } from "../common/monaco";
+import { getCodeBlocks } from "../helpers";
+import Monaco, { setupRLanguage, themes } from "../common/monaco";
 import { getComponent } from "../components";
+import { state } from "../main";
+import { WebR } from "webr";
 
-export const runCode = async (webR: WebR) => {
+export const runCode = async () => {
   const editor = Monaco.editor.getEditors()[0];
   const model = editor.getModel();
-  const position = editor.getPosition();
-  const lineNumber = position?.lineNumber ?? 1;
 
-  const lines: string[] = [];
-  const currentLine = model?.getLineContent(lineNumber)?.trim() ?? "";
+  const selection = editor.getSelection();
 
-  const isFunctionStart = currentLine.includes("function");
-  const isFunctionEnd = !!currentLine.match('"}"')?.length;
+  const lines = [];
 
-  if (isFunctionStart && !isFunctionEnd) {
-    const allLines = model?.getLinesContent() ?? [];
+  if (!selection?.isEmpty()) {
+    const selected = model?.getValueInRange(
+      new Monaco.Range(
+        selection?.startLineNumber ?? 1,
+        selection?.startColumn ?? 1,
+        selection?.endLineNumber ?? 1,
+        selection?.endColumn ?? 1
+      )
+    );
 
-    let bracketLevel = 1;
-    let isQuoting = false;
-    let isDQuoting = false;
-    let isEscaping = false;
-
-    for (const line of allLines.slice(lineNumber - 1, allLines.length)) {
-      lines.push(line);
-
-      for (const char of line.split("")) {
-        if (char === "\\") {
-          isEscaping = !isEscaping;
-          continue;
-        }
-
-        if (char === '"' && !isEscaping && !isQuoting) {
-          isDQuoting = !isDQuoting;
-          continue;
-        }
-
-        if (char === "'" && !isEscaping && !isDQuoting) {
-          isQuoting = !isQuoting;
-          continue;
-        }
-
-        if (char === "{" && !isDQuoting && !isQuoting) {
-          bracketLevel += 1;
-          continue;
-        }
-
-        if (char === "}" && !isDQuoting && !isQuoting) {
-          bracketLevel -= 1;
-        }
-      }
-
-      if (bracketLevel === 0) {
-        break;
-      }
-    }
-  } else if (!isFunctionStart && isFunctionEnd) {
+    lines.push(...(selected?.split("\n") ?? []));
   } else {
-    lines.push(currentLine);
-  }
+    const lineNumber = selection?.startLineNumber ?? 1;
+    const line = model?.getLineContent(lineNumber) ?? "";
 
-  const rConsole = getComponent<HTMLDivElement>("console");
+    const blocks = getCodeBlocks(model?.getLinesContent() ?? []);
 
-  const fullLine = lines.join(" ; ");
+    const block = blocks.find((x) => x[0] <= lineNumber && x[1] >= lineNumber);
 
-  const isAssignment = new RegExp(/^\w+\s*(<-|=)(.*)/).test(fullLine.trim());
+    if (block) {
+      const [start, end] = block;
 
-  const shelter = await new webR.Shelter();
-
-  lines.forEach((line, i) => {
-    if (i === 0) {
-      rConsole.innerHTML += html`<div><span class="opacity-40 select-none mr-1">&gt;</span>${line}</div>`;
+      for (let i = start; i <= end; i++) {
+        lines.push(model?.getLineContent(i));
+      }
     } else {
-      rConsole.innerHTML += html`<div><span class="opacity-20 select-none mr-1">+</span>${line}</div>`;
-    }
-  });
-
-  const result = await shelter.captureR(fullLine);
-
-  if (isAssignment) {
-    return;
-  }
-
-  const stdout = result.output.filter((x) => x.type === "stdout").map((x) => x.data);
-
-  for (const out of stdout) {
-    rConsole.innerHTML += html`<div>${out}</div>`;
-  }
-
-  const resultJs = await result.result.toJs();
-
-  if (resultJs.type === "character") {
-    console.log(resultJs);
-
-    for (const out of resultJs.values) {
-      rConsole.innerHTML += html`<div class="opacity-70">${out}</div>`;
+      lines.push(line);
     }
   }
+
+  console.log(lines);
+
+  // Run lines
+
+  // const rConsole = getComponent<HTMLDivElement>("console");
+
+  for (const line of lines) {
+    console.log(line);
+    state.webR.writeConsole(line ?? "");
+  }
+
+  // const isAssignment = new RegExp(/^\w+\s*(<-|=)(.*)/).test(fullLine.trim());
+
+  // const shelter = await new webR.Shelter();
+
+  // lines.forEach((line, i) => {
+  //   if (i === 0) {
+  //     rConsole.innerHTML += html`<div><span class="opacity-40 select-none mr-1">&gt;</span>${line}</div>`;
+  //   } else {
+  //     rConsole.innerHTML += html`<div><span class="opacity-20 select-none mr-1">+</span>${line}</div>`;
+  //   }
+  // });
+
+  // const result = await shelter.captureR(fullLine);
+
+  // if (isAssignment) {
+  //   return;
+  // }
+
+  // const stdout = result.output.filter((x) => x.type === "stdout").map((x) => x.data);
+
+  // for (const out of stdout) {
+  //   rConsole.innerHTML += html`<div>${out}</div>`;
+  // }
+
+  // const resultJs = await result.result.toJs();
+
+  // if (resultJs.type === "character") {
+  //   console.log(resultJs);
+
+  //   for (const out of resultJs.values) {
+  //     rConsole.innerHTML += html`<div class="opacity-70">${out}</div>`;
+  //   }
+  // }
 };
 
-export const setupEditor = async () => {
+export const setupEditor = async (webR: WebR) => {
   const editor = getComponent<HTMLDivElement>("editor");
   const themeSelector = getComponent<HTMLSelectElement>("themeSelector");
+
+  await setupRLanguage(webR);
 
   Monaco.editor.create(editor, {
     value: [
@@ -110,8 +100,12 @@ export const setupEditor = async () => {
       "summary(data)",
       "",
       "a <- function(x) {",
-      "\tprint(x)",
+      '\tprint("x}")',
       "}",
+      "",
+      `text <- "This is a`,
+      `{} ''`,
+      `\\" multiline string"`,
     ].join("\n"),
     language: "r",
     automaticLayout: true,

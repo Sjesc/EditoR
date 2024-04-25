@@ -7,8 +7,7 @@ import jsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
 import cssWorker from "monaco-editor/esm/vs/language/css/css.worker?worker";
 import htmlWorker from "monaco-editor/esm/vs/language/html/html.worker?worker";
 import tsWorker from "monaco-editor/esm/vs/language/typescript/ts.worker?worker";
-import { state } from "../main";
-import { RFunction } from "webr";
+import { RFunction, WebR } from "webr";
 import { captureROutput } from "./webR";
 import { getTokensProvider } from "../config/tokensProvider";
 
@@ -44,8 +43,8 @@ export const themes = await Promise.all(
   })
 );
 
-export const setupRLanguage = async () => {
-  const baseShelter = await new state.webR.Shelter();
+export const setupRLanguage = async (webR: WebR) => {
+  const baseShelter = await new webR.Shelter();
 
   const baseFunctionsDefs = await captureROutput<string>(baseShelter, `print(lsf.str("package:base"))`);
   const statsFunctionsDefs = await captureROutput<string>(baseShelter, `print(lsf.str("package:stats"))`);
@@ -90,7 +89,7 @@ export const setupRLanguage = async () => {
       const token = words[words.length - 1];
       const parameters = selected.slice(end + 1, column - 1).split(",");
 
-      const shelter = await new state.webR.Shelter();
+      const shelter = await new webR.Shelter();
 
       const result = await shelter.captureR(`tools:::Rd2txt(utils:::.getHelpFile(as.character(help(${token}))))`);
 
@@ -123,7 +122,7 @@ export const setupRLanguage = async () => {
 
   Monaco.languages.registerHoverProvider("r", {
     async provideHover(model, position) {
-      const shelter = await new state.webR.Shelter();
+      const shelter = await new webR.Shelter();
 
       const word = model.getWordAtPosition(position)?.word;
 
@@ -146,7 +145,7 @@ export const setupRLanguage = async () => {
 
   Monaco.languages.registerCompletionItemProvider("r", {
     provideCompletionItems: async (model: Monaco.editor.ITextModel, position: Monaco.Position) => {
-      const shelter = await new state.webR.Shelter();
+      const shelter = await new webR.Shelter();
 
       const lineNumber = position.lineNumber;
       const line = model.getLineContent(lineNumber);

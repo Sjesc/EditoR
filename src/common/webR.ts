@@ -9,7 +9,7 @@ const rFunctions = {
 type RFunctionName = keyof typeof rFunctions;
 
 export const getRFunction = async (fnName: RFunctionName) => {
-  const fn = (await state.webR.evalR(fnName)) as RFunction;
+  const fn = (await state.webR.evalR(rFunctions[fnName])) as RFunction;
 
   return fn;
 };
