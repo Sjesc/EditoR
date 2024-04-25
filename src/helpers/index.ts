@@ -7,10 +7,7 @@ export const styles = (styles: CSSProperties) => {
 
   const value = keys
     .map((key) => {
-      const newKey = key.replace(
-        /[A-Z]/g,
-        (letter) => `-${letter.toLowerCase()}`
-      );
+      const newKey = key.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
       return `${newKey}: ${styles[key]};`;
     })
     .join("");
