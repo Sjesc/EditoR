@@ -1,5 +1,35 @@
 import { callRFunction } from "../common/webR";
 
+const keywords = [
+  "break",
+  "next",
+  "return",
+  "if",
+  "else",
+  "for",
+  "in",
+  "repeat",
+  "while",
+  "array",
+  "category",
+  "character",
+  "complex",
+  "double",
+  "function",
+  "integer",
+  "list",
+  "logical",
+  "matrix",
+  "numeric",
+  "vector",
+  "factor",
+  "library",
+  "require",
+  "attach",
+  "detach",
+  "source",
+];
+
 export const getTokensProvider = async () => {
   const baseTokens = await callRFunction<string>("getTokens", "package:base");
   const statsTokens = await callRFunction<string>("getTokens", "package:stats");
@@ -94,37 +124,9 @@ export const getTokensProvider = async () => {
       "R.version.string",
     ],
 
-    keywords: [
-      "break",
-      "next",
-      "return",
-      "if",
-      "else",
-      "for",
-      "in",
-      "repeat",
-      "while",
-      "array",
-      "category",
-      "character",
-      "complex",
-      "double",
-      "function",
-      "integer",
-      "list",
-      "logical",
-      "matrix",
-      "numeric",
-      "vector",
-      "factor",
-      "library",
-      "require",
-      "attach",
-      "detach",
-      "source",
-    ],
+    keywords: keywords,
 
-    functions: [...tokens, "data.frame"],
+    functions: [...tokens.filter((x) => !keywords.includes(x)), "data.frame"],
 
     special: ["\\n", "\\r", "\\t", "\\b", "\\a", "\\f", "\\v", "\\'", '\\"', "\\\\"],
 
@@ -152,7 +154,7 @@ export const getTokensProvider = async () => {
 
         [/@[a-zA-Z]\w*/, "tag"],
         [
-          /[a-zA-Z.]\w*/,
+          /[a-zA-Z.0-9]*/,
           {
             cases: {
               "@functions": "entity.name.function",
