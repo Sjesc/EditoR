@@ -38,8 +38,6 @@ export const updatePackages = async () => {
 
   rPackages.innerHTML = "";
 
-  console.log(packages);
-
   packages
     .flatMap((x) => x.replace(/\[(\d)+\]/, "").split(/\s+/))
     .filter((x) => x.length > 0)
@@ -48,9 +46,7 @@ export const updatePackages = async () => {
       const name = x.trim().slice(1, -1);
 
       const div = html`
-        <div class="whitespace-nowrap monaco-component bg-[var(--vscode-badge-background)] rounded-lg px-2">
-          ${name}
-        </div>
+        <div class="whitespace-nowrap monaco-component bg-black bg-opacity-30 rounded-lg px-2">${name}</div>
       `;
 
       rPackages.innerHTML += div;
@@ -72,48 +68,51 @@ export const insertConsoleLine = (text: string, prefix: string = "&gt;", color?:
   }, 100);
 };
 
-export const runCode = async () => {
+export const runCode = async (code?: string) => {
   const runButton = getComponent<HTMLButtonElement>("runCode");
 
   if (runButton.disabled) {
     return;
   }
-
-  const editor = Monaco.editor.getEditors()[0];
-  const model = editor.getModel();
-
-  const selection = editor.getSelection();
-
   const lines = [];
 
-  if (!selection?.isEmpty()) {
-    const selected = model?.getValueInRange(
-      new Monaco.Range(
-        selection?.startLineNumber ?? 1,
-        selection?.startColumn ?? 1,
-        selection?.endLineNumber ?? 1,
-        selection?.endColumn ?? 1
-      )
-    );
+  if (!code) {
+    const editor = Monaco.editor.getEditors()[0];
+    const model = editor.getModel();
 
-    lines.push(...(selected?.split("\n") ?? []));
-  } else {
-    const lineNumber = selection?.startLineNumber ?? 1;
-    const line = model?.getLineContent(lineNumber) ?? "";
+    const selection = editor.getSelection();
 
-    const blocks = getCodeBlocks(model?.getLinesContent() ?? []);
+    if (!selection?.isEmpty()) {
+      const selected = model?.getValueInRange(
+        new Monaco.Range(
+          selection?.startLineNumber ?? 1,
+          selection?.startColumn ?? 1,
+          selection?.endLineNumber ?? 1,
+          selection?.endColumn ?? 1
+        )
+      );
 
-    const block = blocks.find((x) => x[0] <= lineNumber && x[1] >= lineNumber);
-
-    if (block) {
-      const [start, end] = block;
-
-      for (let i = start; i <= end; i++) {
-        lines.push(model?.getLineContent(i));
-      }
+      lines.push(...(selected?.split("\n") ?? []));
     } else {
-      lines.push(line);
+      const lineNumber = selection?.startLineNumber ?? 1;
+      const line = model?.getLineContent(lineNumber) ?? "";
+
+      const blocks = getCodeBlocks(model?.getLinesContent() ?? []);
+
+      const block = blocks.find((x) => x[0] <= lineNumber && x[1] >= lineNumber);
+
+      if (block) {
+        const [start, end] = block;
+
+        for (let i = start; i <= end; i++) {
+          lines.push(model?.getLineContent(i));
+        }
+      } else {
+        lines.push(line);
+      }
     }
+  } else {
+    lines.push(code);
   }
 
   const prefix = getComponent("consoleInputPrefix");
@@ -161,7 +160,7 @@ export const setupEditor = async (webR: WebR) => {
     statusColumn.innerHTML = e.position.column.toString();
   });
 
-  monacoEditor.addCommand(KeyMod.CtrlCmd | KeyCode.Enter, runCode);
+  monacoEditor.addCommand(KeyMod.CtrlCmd | KeyCode.Enter, runCode.bind(null, undefined));
 
   themeSelector.onchange = () => {
     Monaco.editor.setTheme(themeSelector.value);

@@ -98,7 +98,26 @@ updateComponent(
 setupEditor(webR);
 
 const runCodeButton = getComponent<HTMLButtonElement>("runCode");
-runCodeButton.addEventListener("click", runCode);
+runCodeButton.addEventListener("click", runCode.bind(this, undefined));
+
+const inputHistory: string[] = [];
+
+const rConsoleInput = getComponent<HTMLInputElement>("consoleInput");
+rConsoleInput.addEventListener("keydown", async (e) => {
+  if (e.key === "Enter") {
+    await runCode(rConsoleInput.value);
+
+    inputHistory.push(rConsoleInput.value);
+
+    rConsoleInput.value = "";
+
+    e.preventDefault();
+  }
+
+  if (e.key === "ArrowUp" && inputHistory.length > 0) {
+    rConsoleInput.value = inputHistory.pop() ?? "";
+  }
+});
 
 export const state = {
   monaco: monaco,
