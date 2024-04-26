@@ -69,6 +69,7 @@ updateComponent(
           backgroundColor: "var(--vscode-editor-background)",
           color: "var(--vscode-editor-foreground)",
           gridTemplateRows: "1fr 1fr 3fr",
+          borderLeft: "1px solid var(--vscode-editorWidget-border)",
         })}>
             <div class="flex flex-col overflow-hidden">
               <div class="font-medium text-lg mb-1">Enviroment</div>
