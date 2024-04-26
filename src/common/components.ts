@@ -4,6 +4,10 @@ export const components = {
   themeSelector: "theme-selector",
   runCode: "run-code",
   console: "console",
+  consoleInput: "console-input",
+  consoleInputPrefix: "console-input-prefix",
+  statusLine: "status-line",
+  statusColumn: "status-column",
 } as const;
 
 export type ComponentName = keyof typeof components;

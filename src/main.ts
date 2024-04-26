@@ -1,9 +1,9 @@
 import "./style.css";
 
 import { WebR } from "webr";
-import { setupEditor, runCode } from "./actions/index.ts";
+import { setupEditor, runCode, insertConsoleLine } from "./actions/index.ts";
 import { html, styles } from "./helpers/index.ts";
-import { components, getComponent, updateComponent } from "./components/index.ts";
+import { components, getComponent, updateComponent } from "./common/components.ts";
 import * as monaco from "monaco-editor";
 
 updateComponent("app", html`<div>Loading...</div>`);
@@ -15,7 +15,7 @@ updateComponent(
   "app",
   html`
     <div class="w-full h-full flex flex-col">
-      <div
+      <nav
         class="flex items-center monaco-component opacity-90 py-2 px-4"
         ${styles({ backgroundColor: "var(--vscode-editor-background)" })}
       >
@@ -26,17 +26,35 @@ updateComponent(
             <option>theme</option>
           </select>
         </div>
-      </div>
+      </nav>
+
       <div class="flex flex-col flex-1">
-        <div id="${components.editor}" class="flex-1 w-full"></div>
+        <main id="${components.editor}" class="flex-1 w-full"></main>
         <div
-          id="${components.console}"
-          class="h-[300px] w-full monaco-component opacity-90 p-4 font-mono overflow-y-auto"
+          class="h-[24px] px-4 text-xs flex items-center monaco-component opacity-95"
+          ${styles({ backgroundColor: "var(--vscode-editor-background)", color: "var(--vscode-editor-foreground)" })}
+        >
+          <div>Ln <span id="status-line">1</span>, Col <span id="status-column">1</span></div>
+        </div>
+        <footer
+          class="h-[300px] w-full monaco-component opacity-90 p-4 overflow-y-auto text-sm"
           ${styles({
             backgroundColor: "var(--vscode-editor-background)",
             color: "var(--vscode-editor-foreground)",
+            fontFamily: "JetBrainsMono",
           })}
-        ></div>
+        >
+          <div id="${components.console}"></div>
+          <div class="flex">
+            <div class="opacity-40 mr-1" id="console-input-prefix">&gt;</div>
+            <input
+              id="console-input"
+              class="bg-transparent w-full"
+              ${styles({ outline: "none !important" })}
+              autocomplete="off"
+            />
+          </div>
+        </footer>
       </div>
     </div>
   `
@@ -54,15 +72,20 @@ export const state = {
 
 for (;;) {
   const output = await webR.read();
+  const rConsoleInputPrefix = getComponent("consoleInputPrefix");
+
   switch (output.type) {
     case "stdout":
-      console.log(output.data);
+      rConsoleInputPrefix.innerHTML = ">";
+      insertConsoleLine(output.data, "");
       break;
     case "stderr":
+      rConsoleInputPrefix.innerHTML = ">";
+      insertConsoleLine(output.data, "", "var(--vscode-editorError-foreground)");
       console.error(output.data);
       break;
     case "prompt":
-      console.log(output.data);
+      rConsoleInputPrefix.innerHTML = output.data;
       break;
     default:
       console.warn(`Unhandled output type: ${output.type}.`);

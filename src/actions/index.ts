@@ -1,8 +1,22 @@
-import { getCodeBlocks } from "../helpers";
+import { getCodeBlocks, html, styles } from "../helpers";
 import Monaco, { setupRLanguage, themes } from "../common/monaco";
-import { getComponent } from "../components";
 import { state } from "../main";
 import { WebR } from "webr";
+import { getComponent } from "../common/components";
+import { KeyCode, KeyMod } from "monaco-editor";
+
+export const insertConsoleLine = (text: string, prefix: string = "&gt;", color?: string) => {
+  const rConsole = getComponent("console");
+  const rConsoleInput = getComponent("consoleInput");
+
+  rConsole.innerHTML += html`<div class="monaco-component" ${styles({ color: color ?? "inherit" })}>
+    <span class="opacity-40 select-none mr-1">${prefix}</span>${text}
+  </div>`;
+
+  setTimeout(() => {
+    rConsoleInput.scrollIntoView({ behavior: "smooth" });
+  }, 100);
+};
 
 export const runCode = async () => {
   const editor = Monaco.editor.getEditors()[0];
@@ -42,59 +56,23 @@ export const runCode = async () => {
     }
   }
 
-  console.log(lines);
-
-  // Run lines
-
-  // const rConsole = getComponent<HTMLDivElement>("console");
-
-  for (const line of lines) {
-    console.log(line);
+  lines.forEach((line, index) => {
     state.webR.writeConsole(line ?? "");
-  }
 
-  // const isAssignment = new RegExp(/^\w+\s*(<-|=)(.*)/).test(fullLine.trim());
-
-  // const shelter = await new webR.Shelter();
-
-  // lines.forEach((line, i) => {
-  //   if (i === 0) {
-  //     rConsole.innerHTML += html`<div><span class="opacity-40 select-none mr-1">&gt;</span>${line}</div>`;
-  //   } else {
-  //     rConsole.innerHTML += html`<div><span class="opacity-20 select-none mr-1">+</span>${line}</div>`;
-  //   }
-  // });
-
-  // const result = await shelter.captureR(fullLine);
-
-  // if (isAssignment) {
-  //   return;
-  // }
-
-  // const stdout = result.output.filter((x) => x.type === "stdout").map((x) => x.data);
-
-  // for (const out of stdout) {
-  //   rConsole.innerHTML += html`<div>${out}</div>`;
-  // }
-
-  // const resultJs = await result.result.toJs();
-
-  // if (resultJs.type === "character") {
-  //   console.log(resultJs);
-
-  //   for (const out of resultJs.values) {
-  //     rConsole.innerHTML += html`<div class="opacity-70">${out}</div>`;
-  //   }
-  // }
+    insertConsoleLine(line ?? "", index === 0 ? "&gt;" : "+");
+  });
 };
 
 export const setupEditor = async (webR: WebR) => {
   const editor = getComponent<HTMLDivElement>("editor");
   const themeSelector = getComponent<HTMLSelectElement>("themeSelector");
 
+  const statusLine = getComponent("statusLine");
+  const statusColumn = getComponent("statusColumn");
+
   await setupRLanguage(webR);
 
-  Monaco.editor.create(editor, {
+  const monacoEditor = Monaco.editor.create(editor, {
     value: [
       "data <- data.frame(x = 1:10, y = rnorm(10))",
       "summary(data)",
@@ -108,8 +86,17 @@ export const setupEditor = async (webR: WebR) => {
       `\\" multiline string"`,
     ].join("\n"),
     language: "r",
+    fontFamily: "JetBrainsMono",
+    fontLigatures: true,
     automaticLayout: true,
   });
+
+  monacoEditor.onDidChangeCursorPosition((e) => {
+    statusLine.innerHTML = e.position.lineNumber.toString();
+    statusColumn.innerHTML = e.position.column.toString();
+  });
+
+  monacoEditor.addCommand(KeyMod.CtrlCmd | KeyCode.Enter, runCode);
 
   themeSelector.onchange = () => {
     Monaco.editor.setTheme(themeSelector.value);
