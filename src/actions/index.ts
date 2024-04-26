@@ -1,6 +1,6 @@
 import { getCodeBlocks, html, styles } from "../helpers";
-import Monaco, { setupRLanguage, themes } from "../common/monaco";
-import { state } from "../main";
+import Monaco, { setupRLanguage } from "../common/monaco";
+import { state, themes } from "../main";
 import { WebR } from "webr";
 import { getComponent } from "../common/components";
 import { KeyCode, KeyMod } from "monaco-editor";
@@ -128,45 +128,8 @@ export const runCode = async (code?: string) => {
 };
 
 export const setupEditor = async (webR: WebR) => {
-  const editor = getComponent<HTMLDivElement>("editor");
+  // Setup themes
   const themeSelector = getComponent<HTMLSelectElement>("themeSelector");
-
-  const statusLine = getComponent("statusLine");
-  const statusColumn = getComponent("statusColumn");
-
-  await setupRLanguage(webR);
-
-  const monacoEditor = Monaco.editor.create(editor, {
-    value: [
-      "data <- data.frame(x = 1:10, y = rnorm(10))",
-      "summary(data)",
-      "",
-      "a <- function(x) {",
-      '\tprint("x}")',
-      "}",
-      "",
-      `text <- "This is a`,
-      `{} ''`,
-      `\\" multiline string"`,
-    ].join("\n"),
-    language: "r",
-    fontFamily: "JetBrainsMono",
-    fontLigatures: true,
-    automaticLayout: true,
-  });
-
-  monacoEditor.onDidChangeCursorPosition((e) => {
-    statusLine.innerHTML = e.position.lineNumber.toString();
-    statusColumn.innerHTML = e.position.column.toString();
-  });
-
-  monacoEditor.addCommand(KeyMod.CtrlCmd | KeyCode.Enter, runCode.bind(null, undefined));
-
-  themeSelector.onchange = () => {
-    Monaco.editor.setTheme(themeSelector.value);
-
-    localStorage.setItem("theme", themeSelector.value);
-  };
 
   for (const { name } of themes) {
     const option = document.createElement("option");
@@ -185,4 +148,46 @@ export const setupEditor = async (webR: WebR) => {
 
   themeSelector.value = defaultTheme;
   Monaco.editor.setTheme(defaultTheme);
+
+  const editor = getComponent<HTMLDivElement>("editor");
+
+  const statusLine = getComponent("statusLine");
+  const statusColumn = getComponent("statusColumn");
+
+  // Setup R Features
+  await setupRLanguage(webR);
+
+  // Setup Editor
+  const monacoEditor = Monaco.editor.create(editor, {
+    value: [
+      "data <- data.frame(x = 1:10, y = rnorm(10))",
+      "summary(data)",
+      "",
+      "a <- function(x) {",
+      '\tprint("x}")',
+      "}",
+      "",
+      `text <- "This is a`,
+      `{} ''`,
+      `\\" multiline string"`,
+    ].join("\n"),
+    language: "r",
+    fontFamily: "JetBrainsMono",
+    theme: defaultTheme,
+    fontLigatures: true,
+    automaticLayout: true,
+  });
+
+  monacoEditor.onDidChangeCursorPosition((e) => {
+    statusLine.innerHTML = e.position.lineNumber.toString();
+    statusColumn.innerHTML = e.position.column.toString();
+  });
+
+  monacoEditor.addCommand(KeyMod.CtrlCmd | KeyCode.Enter, runCode.bind(null, undefined));
+
+  themeSelector.onchange = () => {
+    Monaco.editor.setTheme(themeSelector.value);
+
+    localStorage.setItem("theme", themeSelector.value);
+  };
 };

@@ -1,7 +1,5 @@
 import * as Monaco from "monaco-editor";
 
-const themesPs = import.meta.glob("../themes/*.json");
-
 import editorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
 import jsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
 import cssWorker from "monaco-editor/esm/vs/language/css/css.worker?worker";
@@ -30,18 +28,6 @@ self.MonacoEnvironment = {
 };
 
 export default Monaco;
-
-export const themes = await Promise.all(
-  Object.entries(themesPs).map(async ([path, loadTheme]) => {
-    const theme = (await loadTheme()) as string;
-
-    const [_, __, fileName] = path.split("/");
-    const themeName = fileName.split(".")[0];
-    const name = themeName.replace(/\s/g, "").toLowerCase();
-
-    return { name, theme };
-  })
-);
 
 export const setupRLanguage = async (webR: WebR) => {
   const baseShelter = await new webR.Shelter();

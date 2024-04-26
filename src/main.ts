@@ -1,4 +1,5 @@
 import "./style.css";
+const themesPs = import.meta.glob("./themes/*.json");
 
 import { WebR } from "webr";
 import { setupEditor, runCode, insertConsoleLine } from "./actions/index.ts";
@@ -6,7 +7,43 @@ import { html, styles } from "./helpers/index.ts";
 import { components, getComponent, updateComponent } from "./common/components.ts";
 import * as monaco from "monaco-editor";
 
-updateComponent("app", html`<div>Loading...</div>`);
+export const loadThemes = () =>
+  Promise.all(
+    Object.entries(themesPs).map(async ([path, loadTheme]) => {
+      const theme = (await loadTheme()) as { colors: Record<string, string> };
+
+      const [_, __, fileName] = path.split("/");
+      const themeName = fileName.split(".")[0];
+      const name = themeName.replace(/\s/g, "").toLowerCase();
+
+      return { name, theme };
+    })
+  );
+
+export const themes = await loadThemes();
+
+const themeName = localStorage.getItem("theme") ?? "dracula";
+const theme = themes.find((x) => x.name === themeName)?.theme ?? themes[0].theme;
+
+updateComponent(
+  "app",
+  html`<div
+    class="flex flex-col items-center justify-center h-screen "
+    ${styles({ backgroundColor: theme.colors["editor.background"], color: theme.colors["editor.foreground"] })}
+  >
+    <div class="mb-8 opacity-50 text-xl font-thin">Loading...</div>
+    <div class="loader">
+      <div></div>
+      <div></div>
+      <div></div>
+      <div></div>
+      <div></div>
+      <div></div>
+      <div></div>
+      <div></div>
+    </div>
+  </div>`
+);
 
 const webR = new WebR();
 await webR.init();
@@ -17,7 +54,10 @@ await webR.evalRVoid("options(device=webr::canvas)");
 updateComponent(
   "app",
   html`
-    <div class="w-full h-full flex flex-col">
+    <div class="w-full h-full flex flex-col" ${styles({
+      backgroundColor: theme.colors["editor.background"],
+      color: theme.colors["editor.foreground"],
+    })}>
       <nav
         class="flex items-center monaco-component opacity-90 py-2 px-4"
         ${styles({ backgroundColor: "var(--vscode-editor-background)" })}
@@ -86,7 +126,7 @@ updateComponent(
               <div class="font-medium text-lg mb-1">Plots</div>
               <div class="bg-white flex overflow-auto gap-x-2 flex-wrap" id="${components.plots}"></div>
             </div>
-       
+
         </aside>
         </div>
       </div>
