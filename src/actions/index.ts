@@ -22,7 +22,7 @@ export const updateEnviroment = async () => {
 
       const div = html`<div class="flex gap-x-1 overflow-hidden">
         <div>${name}</div>
-        <div class="opacity-60 whitespace-nowrap text-ellipsis overflow-hidden">${desc}</div>
+        <div class="opacity-60 whitespace-nowrap text-ellipsis overflow-hidden font-thin">${desc}</div>
       </div>`;
 
       rEnviroment.innerHTML += div;
@@ -46,7 +46,11 @@ export const updatePackages = async () => {
       const name = x.trim().slice(1, -1);
 
       const div = html`
-        <div class="whitespace-nowrap monaco-component bg-black bg-opacity-30 rounded-lg px-2">${name}</div>
+        <div
+          class="whitespace-nowrap monaco-component bg-black text-white bg-opacity-40 rounded-lg px-2 font-thin text-sm"
+        >
+          ${name}
+        </div>
       `;
 
       rPackages.innerHTML += div;
@@ -68,8 +72,9 @@ export const insertConsoleLine = (text: string, prefix: string = "&gt;", color?:
   }, 100);
 };
 
-export const runCode = async (code?: string) => {
+export const runCode = async (code?: string[]) => {
   const runButton = getComponent<HTMLButtonElement>("runCode");
+  const runAllButton = getComponent<HTMLButtonElement>("runAll");
 
   if (runButton.disabled) {
     return;
@@ -112,7 +117,7 @@ export const runCode = async (code?: string) => {
       }
     }
   } else {
-    lines.push(code);
+    lines.push(...code);
   }
 
   const prefix = getComponent("consoleInputPrefix");
@@ -121,10 +126,18 @@ export const runCode = async (code?: string) => {
     state.webR.writeConsole(line ?? "");
 
     runButton.disabled = true;
+    runAllButton.disabled = true;
     prefix.innerHTML = "";
 
     insertConsoleLine(line ?? "", index === 0 ? "&gt;" : "+");
   });
+};
+
+export const runAll = async () => {
+  const editor = Monaco.editor.getEditors()[0];
+  const model = editor.getModel();
+
+  await runCode(model?.getLinesContent() ?? []);
 };
 
 export const setupEditor = async (webR: WebR) => {
@@ -134,7 +147,7 @@ export const setupEditor = async (webR: WebR) => {
   for (const { name } of themes) {
     const option = document.createElement("option");
     option.value = name;
-    option.textContent = "theme: " + name;
+    option.textContent = name;
     themeSelector.appendChild(option);
   }
 

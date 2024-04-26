@@ -3,6 +3,7 @@ export const components = {
   editor: "editor",
   themeSelector: "theme-selector",
   runCode: "run-code",
+  runAll: "run-all",
   console: "console",
   consoleInput: "console-input",
   consoleInputPrefix: "console-input-prefix",
