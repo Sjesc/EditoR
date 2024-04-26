@@ -29,6 +29,34 @@ export const updateEnviroment = async () => {
     });
 };
 
+export const updatePackages = async () => {
+  const rPackages = getComponent("packages");
+
+  const baseShelter = await new state.webR.Shelter();
+
+  const packages = await captureROutput<string>(baseShelter, `print(.packages(TRUE))`);
+
+  rPackages.innerHTML = "";
+
+  console.log(packages);
+
+  packages
+    .flatMap((x) => x.replace(/\[(\d)+\]/, "").split(/\s+/))
+    .filter((x) => x.length > 0)
+    .sort((a, b) => a.localeCompare(b))
+    .forEach((x) => {
+      const name = x.trim().slice(1, -1);
+
+      const div = html`
+        <div class="whitespace-nowrap monaco-component bg-[var(--vscode-badge-background)] rounded-lg px-2">
+          ${name}
+        </div>
+      `;
+
+      rPackages.innerHTML += div;
+    });
+};
+
 export const insertConsoleLine = (text: string, prefix: string = "&gt;", color?: string) => {
   const rConsole = getComponent("console");
   const rConsoleInput = getComponent("consoleInput");
@@ -40,6 +68,7 @@ export const insertConsoleLine = (text: string, prefix: string = "&gt;", color?:
   setTimeout(() => {
     rConsoleInput.scrollIntoView({ behavior: "smooth" });
     updateEnviroment();
+    updatePackages();
   }, 100);
 };
 
