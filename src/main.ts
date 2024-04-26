@@ -11,7 +11,8 @@ updateComponent("app", html`<div>Loading...</div>`);
 const webR = new WebR();
 await webR.init();
 
-webR.writeConsole("webr::shim_install()");
+await webR.evalRVoid("webr::shim_install()");
+await webR.evalRVoid("options(device=webr::canvas)");
 
 updateComponent(
   "app",
@@ -64,15 +65,27 @@ updateComponent(
           </footer>
         </div>
 
-        <aside class="w-[400px] p-4 monaco-component" ${styles({
+        <aside class="w-[500px] grid p-4 monaco-component" ${styles({
           backgroundColor: "var(--vscode-editor-background)",
           color: "var(--vscode-editor-foreground)",
+          gridTemplateRows: "1fr 1fr 3fr",
         })}>
-            <div class="font-medium text-lg">Enviroment</div>
-
-            <div id="${components.enviroment}">
-
+            <div>
+              <div class="font-medium text-lg mb-1">Enviroment</div>
+              <div id="${components.enviroment}"></div>
             </div>
+
+            <div>
+              <div class="font-medium text-lg mb-1">Packages</div>
+              <div id="${components.packages}"></div>
+              ${/* .packages(TRUE) */ ""}
+            </div>
+
+            <div>
+              <div class="font-medium text-lg mb-1">Plots</div>
+              <div class="bg-white flex overflow-auto gap-x-2 flex-wrap" id="${components.plots}"></div>
+            </div>
+       
         </aside>
         </div>
       </div>
@@ -90,18 +103,19 @@ export const state = {
   webR: webR,
 } as const;
 
+let canvas = null;
+
 for (;;) {
   const output = await webR.read();
   const rConsoleInputPrefix = getComponent("consoleInputPrefix");
   const runButton = getComponent<HTMLButtonElement>("runCode");
+  const plots = getComponent("plots");
 
   switch (output.type) {
     case "stdout":
-      rConsoleInputPrefix.innerHTML = ">";
       insertConsoleLine(output.data, "");
       break;
     case "stderr":
-      rConsoleInputPrefix.innerHTML = ">";
       insertConsoleLine(output.data, "", "var(--vscode-editorError-foreground)");
       console.error(output.data);
       break;
@@ -110,8 +124,19 @@ for (;;) {
       runButton.disabled = false;
       break;
     case "canvas":
-      console.log("canvas");
-      console.log(output.data);
+      if (output.data.event === "canvasImage") {
+        canvas?.getContext("2d")?.drawImage(output.data.image, 0, 0);
+      } else if (output.data.event === "canvasNewPage") {
+        // Create a new canvas element
+        canvas = document.createElement("canvas");
+        canvas.setAttribute("width", "1008");
+        canvas.setAttribute("height", "1008");
+        canvas.style.width = `${plots.clientWidth}px`;
+        canvas.style.height = `${plots.clientWidth}px`;
+        canvas.style.display = "inline-block";
+        plots.innerHTML = "";
+        plots.appendChild(canvas);
+      }
       break;
     default:
       console.warn(`Unhandled output type: ${output.type}.`);

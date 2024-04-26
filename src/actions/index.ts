@@ -87,10 +87,13 @@ export const runCode = async () => {
     }
   }
 
+  const prefix = getComponent("consoleInputPrefix");
+
   lines.forEach((line, index) => {
     state.webR.writeConsole(line ?? "");
 
     runButton.disabled = true;
+    prefix.innerHTML = "";
 
     insertConsoleLine(line ?? "", index === 0 ? "&gt;" : "+");
   });

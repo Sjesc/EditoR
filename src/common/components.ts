@@ -9,6 +9,8 @@ export const components = {
   statusLine: "status-line",
   statusColumn: "status-column",
   enviroment: "enviroment",
+  plots: "plots",
+  packages: "packages",
 } as const;
 
 export type ComponentName = keyof typeof components;
