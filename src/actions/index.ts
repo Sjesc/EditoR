@@ -4,6 +4,30 @@ import { state } from "../main";
 import { WebR } from "webr";
 import { getComponent } from "../common/components";
 import { KeyCode, KeyMod } from "monaco-editor";
+import { captureROutput } from "../common/webR";
+
+export const updateEnviroment = async () => {
+  const rEnviroment = getComponent("enviroment");
+
+  const baseShelter = await new state.webR.Shelter();
+
+  const globalEnv = await captureROutput<string>(baseShelter, `print(ls.str(".GlobalEnv"))`);
+
+  rEnviroment.innerHTML = "";
+
+  globalEnv
+    .filter((x) => !x.trim().startsWith("$"))
+    .forEach((x) => {
+      const [name, desc] = x.trim().split(" : ");
+
+      const div = html`<div class="flex gap-x-1 overflow-hidden">
+        <div>${name}</div>
+        <div class="opacity-60 whitespace-nowrap text-ellipsis overflow-hidden">${desc}</div>
+      </div>`;
+
+      rEnviroment.innerHTML += div;
+    });
+};
 
 export const insertConsoleLine = (text: string, prefix: string = "&gt;", color?: string) => {
   const rConsole = getComponent("console");
@@ -15,10 +39,17 @@ export const insertConsoleLine = (text: string, prefix: string = "&gt;", color?:
 
   setTimeout(() => {
     rConsoleInput.scrollIntoView({ behavior: "smooth" });
+    updateEnviroment();
   }, 100);
 };
 
 export const runCode = async () => {
+  const runButton = getComponent<HTMLButtonElement>("runCode");
+
+  if (runButton.disabled) {
+    return;
+  }
+
   const editor = Monaco.editor.getEditors()[0];
   const model = editor.getModel();
 
@@ -58,6 +89,8 @@ export const runCode = async () => {
 
   lines.forEach((line, index) => {
     state.webR.writeConsole(line ?? "");
+
+    runButton.disabled = true;
 
     insertConsoleLine(line ?? "", index === 0 ? "&gt;" : "+");
   });
@@ -100,12 +133,14 @@ export const setupEditor = async (webR: WebR) => {
 
   themeSelector.onchange = () => {
     Monaco.editor.setTheme(themeSelector.value);
+
+    localStorage.setItem("theme", themeSelector.value);
   };
 
   for (const { name } of themes) {
     const option = document.createElement("option");
     option.value = name;
-    option.textContent = name;
+    option.textContent = "theme: " + name;
     themeSelector.appendChild(option);
   }
 
@@ -115,5 +150,8 @@ export const setupEditor = async (webR: WebR) => {
     } catch (e: any) {}
   }
 
-  Monaco.editor.setTheme("dracula");
+  const defaultTheme = localStorage.getItem("theme") ?? "dracula";
+
+  themeSelector.value = defaultTheme;
+  Monaco.editor.setTheme(defaultTheme);
 };

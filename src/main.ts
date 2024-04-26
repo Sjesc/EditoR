@@ -11,6 +11,8 @@ updateComponent("app", html`<div>Loading...</div>`);
 const webR = new WebR();
 await webR.init();
 
+webR.writeConsole("webr::shim_install()");
+
 updateComponent(
   "app",
   html`
@@ -19,7 +21,9 @@ updateComponent(
         class="flex items-center monaco-component opacity-90 py-2 px-4"
         ${styles({ backgroundColor: "var(--vscode-editor-background)" })}
       >
-        <button id="${components.runCode}">Run</button>
+        <button id="${
+          components.runCode
+        }" class="flex items-center gap-x-1 disabled:bg-red-500 disabled:opacity-50">Run <span class="text-xs opacity-80">(Ctrl+Enter)</span> </button>
 
         <div class="ml-auto">
           <select id="${components.themeSelector}">
@@ -28,33 +32,49 @@ updateComponent(
         </div>
       </nav>
 
-      <div class="flex flex-col flex-1">
-        <main id="${components.editor}" class="flex-1 w-full"></main>
-        <div
-          class="h-[24px] px-4 text-xs flex items-center monaco-component opacity-95"
-          ${styles({ backgroundColor: "var(--vscode-editor-background)", color: "var(--vscode-editor-foreground)" })}
-        >
-          <div>Ln <span id="status-line">1</span>, Col <span id="status-column">1</span></div>
-        </div>
-        <footer
-          class="h-[300px] w-full monaco-component opacity-90 p-4 overflow-y-auto text-sm"
-          ${styles({
-            backgroundColor: "var(--vscode-editor-background)",
-            color: "var(--vscode-editor-foreground)",
-            fontFamily: "JetBrainsMono",
-          })}
-        >
-          <div id="${components.console}"></div>
-          <div class="flex">
-            <div class="opacity-40 mr-1" id="console-input-prefix">&gt;</div>
-            <input
-              id="console-input"
-              class="bg-transparent w-full"
-              ${styles({ outline: "none !important" })}
-              autocomplete="off"
-            />
+      <div class="flex flex-1">
+        <div class="flex flex-col flex-1">
+          <main id="${components.editor}" class="flex-1 w-full"></main>
+          <div
+            class="h-[24px] px-4 text-xs flex items-center monaco-component opacity-95"
+            ${styles({ backgroundColor: "var(--vscode-editor-background)", color: "var(--vscode-editor-foreground)" })}
+          >
+            <div>
+              Ln <span id="${components.statusLine}">1</span>, Col <span id="${components.statusColumn}">1</span>
+            </div>
           </div>
-        </footer>
+          <footer
+            class="h-[300px] w-full monaco-component opacity-90 p-4 overflow-y-auto text-sm"
+            ${styles({
+              backgroundColor: "var(--vscode-editor-background)",
+              color: "var(--vscode-editor-foreground)",
+              fontFamily: "JetBrainsMono",
+            })}
+          >
+            <div id="${components.console}"></div>
+            <div class="flex">
+              <div class="opacity-40 mr-1" id=${components.consoleInputPrefix}>&gt;</div>
+              <input
+                id="${components.consoleInput}"
+                class="bg-transparent w-full"
+                ${styles({ outline: "none !important" })}
+                autocomplete="off"
+              />
+            </div>
+          </footer>
+        </div>
+
+        <aside class="w-[400px] p-4 monaco-component" ${styles({
+          backgroundColor: "var(--vscode-editor-background)",
+          color: "var(--vscode-editor-foreground)",
+        })}>
+            <div class="font-medium text-lg">Enviroment</div>
+
+            <div id="${components.enviroment}">
+
+            </div>
+        </aside>
+        </div>
       </div>
     </div>
   `
@@ -73,6 +93,7 @@ export const state = {
 for (;;) {
   const output = await webR.read();
   const rConsoleInputPrefix = getComponent("consoleInputPrefix");
+  const runButton = getComponent<HTMLButtonElement>("runCode");
 
   switch (output.type) {
     case "stdout":
@@ -86,6 +107,11 @@ for (;;) {
       break;
     case "prompt":
       rConsoleInputPrefix.innerHTML = output.data;
+      runButton.disabled = false;
+      break;
+    case "canvas":
+      console.log("canvas");
+      console.log(output.data);
       break;
     default:
       console.warn(`Unhandled output type: ${output.type}.`);

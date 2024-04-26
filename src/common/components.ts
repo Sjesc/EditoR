@@ -8,6 +8,7 @@ export const components = {
   consoleInputPrefix: "console-input-prefix",
   statusLine: "status-line",
   statusColumn: "status-column",
+  enviroment: "enviroment",
 } as const;
 
 export type ComponentName = keyof typeof components;
