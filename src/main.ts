@@ -33,7 +33,7 @@ updateComponent(
         </div>
       </nav>
 
-      <div class="flex flex-1">
+      <div class="flex flex-1 overflow-hidden">
         <div class="flex flex-col flex-1">
           <main id="${components.editor}" class="flex-1 w-full"></main>
           <div
@@ -65,23 +65,24 @@ updateComponent(
           </footer>
         </div>
 
-        <aside class="w-[500px] grid p-4 monaco-component" ${styles({
+        <aside class="w-[500px] grid gap-y-4 p-4 monaco-component overflow-hidden" ${styles({
           backgroundColor: "var(--vscode-editor-background)",
           color: "var(--vscode-editor-foreground)",
           gridTemplateRows: "1fr 1fr 3fr",
         })}>
-            <div>
+            <div class="flex flex-col overflow-hidden">
               <div class="font-medium text-lg mb-1">Enviroment</div>
-              <div id="${components.enviroment}"></div>
+              <div id="${components.enviroment}" class="overflow-auto">
+              </div>
             </div>
 
-            <div>
+            <div class="flex flex-col overflow-hidden">
               <div class="font-medium text-lg mb-1">Packages</div>
-              <div id="${components.packages}"></div>
+              <div id="${components.packages}" class="overflow-auto"></div>
               ${/* .packages(TRUE) */ ""}
             </div>
 
-            <div>
+            <div class="flex flex-col overflow-hidden">
               <div class="font-medium text-lg mb-1">Plots</div>
               <div class="bg-white flex overflow-auto gap-x-2 flex-wrap" id="${components.plots}"></div>
             </div>

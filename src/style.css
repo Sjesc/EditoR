@@ -8,10 +8,9 @@
   src: url("./assets/fonts/JetBrainsMono-Regular.woff2") format("woff2");
 }
 
-html,
-body,
 #app {
-  height: 100%;
+  height: 100vh;
+  overflow: hidden;
 }
 
 main {
