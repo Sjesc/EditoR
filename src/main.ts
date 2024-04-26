@@ -80,7 +80,6 @@ updateComponent(
             <div class="flex flex-col overflow-hidden">
               <div class="font-medium text-lg mb-1">Packages</div>
               <div id="${components.packages}" class="overflow-auto flex gap-2 flex-wrap"></div>
-              ${/* .packages(TRUE) */ ""}
             </div>
 
             <div class="flex flex-col overflow-hidden">
