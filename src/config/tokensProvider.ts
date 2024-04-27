@@ -1,3 +1,4 @@
+import { WebR } from "webr";
 import { callRFunction } from "../common/webR";
 
 const keywords = [
@@ -30,9 +31,9 @@ const keywords = [
   "source",
 ];
 
-export const getTokensProvider = async () => {
-  const baseTokens = await callRFunction<string>("getTokens", "package:base");
-  const statsTokens = await callRFunction<string>("getTokens", "package:stats");
+export const getTokensProvider = async (webR: WebR) => {
+  const baseTokens = await callRFunction<string>(webR, "getTokens", "package:base");
+  const statsTokens = await callRFunction<string>(webR, "getTokens", "package:stats");
 
   const tokens = [...baseTokens.values, ...statsTokens.values];
 
