@@ -215,6 +215,7 @@ export const getTokensProvider = async (webR: WebR) => {
       strings: [
         [/'/, "string.escape", "@stringBody"],
         [/"/, "string.escape", "@dblStringBody"],
+        [/`/, "string.escape", "@bStringBody"],
       ],
       stringBody: [
         [
@@ -240,6 +241,19 @@ export const getTokensProvider = async (webR: WebR) => {
           },
         ],
         [/"/, "string.escape", "@popall"],
+        [/./, "string"],
+      ],
+      bStringBody: [
+        [
+          /\\./,
+          {
+            cases: {
+              "@special": "string",
+              "@default": "error-token",
+            },
+          },
+        ],
+        [/`/, "string.escape", "@popall"],
         [/./, "string"],
       ],
     },
