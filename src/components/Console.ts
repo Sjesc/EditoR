@@ -20,6 +20,7 @@ export class Console {
   private packages: Packages;
   private nav: Nav;
   private history: string[] = [];
+  private queue: string[][] = [];
 
   private isRunning = false;
 
@@ -38,8 +39,12 @@ export class Console {
     this.nav = nav;
     this.editor = editor;
 
-    this.nav.setupButtons(this.runCode, this.runAll);
+    const navButtons = this.nav.getButtons();
+    navButtons.run.addEventListener("click", this.runCode.bind(this, undefined));
+    navButtons.runAll.addEventListener("click", this.runAll.bind(this));
+
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, this.runCode.bind(this, undefined));
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Alt | monaco.KeyCode.Enter, this.runAll.bind(this));
   }
 
   static render() {
@@ -65,9 +70,15 @@ export class Console {
   }
 
   async init() {
+    const _this = this;
+
     this.input.addEventListener("keydown", async (e) => {
       if (e.key === "Enter") {
-        await this.runCode([this.input.value]);
+        if (_this.isRunning) {
+          return;
+        }
+
+        this.executeLines([this.input.value]);
 
         this.history.push(this.input.value);
         this.input.value = "";
@@ -92,8 +103,20 @@ export class Console {
           break;
         case "prompt":
           this.inputPrefix.innerHTML = output.data;
-          this.nav.toggleButtons(false);
-          this.isRunning = false;
+
+          //If prompt is >, then we can execute the next block in the queue
+          if (output.data.trim() === ">") {
+            const lines = this.queue.shift();
+
+            if (lines) {
+              this.executeLines(lines);
+            } else {
+              // If there are not more lines to execute, we can enable running new code
+              this.isRunning = false;
+              this.nav.toggleButtons(false);
+            }
+          }
+
           break;
         case "canvas":
           this.plots.addPlot(output);
@@ -105,63 +128,91 @@ export class Console {
     }
   }
 
-  async runCode(code?: string[]) {
-    if (this.isRunning) {
+  async executeLines(lines?: string[] | void) {
+    if (!lines) {
       return;
     }
-    const lines = [];
 
-    if (!code) {
-      const model = this.editor.getModel();
-
-      const selection = this.editor.getSelection();
-
-      if (!selection?.isEmpty()) {
-        const selected = model?.getValueInRange(
-          new monaco.Range(
-            selection?.startLineNumber ?? 1,
-            selection?.startColumn ?? 1,
-            selection?.endLineNumber ?? 1,
-            selection?.endColumn ?? 1
-          )
-        );
-
-        lines.push(...(selected?.split("\n") ?? []));
-      } else {
-        const lineNumber = selection?.startLineNumber ?? 1;
-        const line = model?.getLineContent(lineNumber) ?? "";
-
-        const blocks = getCodeBlocks(model?.getLinesContent() ?? []);
-
-        const block = blocks.find((x) => x[0] <= lineNumber && x[1] >= lineNumber);
-
-        if (block) {
-          const [start, end] = block;
-
-          for (let i = start; i <= end; i++) {
-            lines.push(model?.getLineContent(i));
-          }
-        } else {
-          lines.push(line);
-        }
-      }
-    } else {
-      console.log(code);
-      lines.push(...code);
-    }
-
-    const prefix = getComponent("consoleInputPrefix");
-
-    lines.forEach((line, index) => {
+    let first = true;
+    for (const line of lines) {
       this.webR.writeConsole(line ?? "");
 
       this.nav.toggleButtons(true);
       this.isRunning = true;
 
-      prefix.innerHTML = "";
+      this.inputPrefix.innerHTML = "";
 
-      this.insertConsoleLine(line ?? "", index === 0 ? "&gt;" : "+");
-    });
+      this.insertConsoleLine(line ?? "", first ? "&gt;" : "+");
+
+      first = false;
+    }
+  }
+
+  async runCode(code?: string[]) {
+    if (this.isRunning) {
+      return;
+    }
+
+    console.log("code", code);
+
+    const model = this.editor.getModel();
+    const allLines = model?.getLinesContent() ?? [];
+    const selection = this.editor.getSelection();
+    const isEmpty = !!selection?.isEmpty();
+
+    const start = { line: 1, column: 1 };
+    const end = { line: 1, column: 1 };
+
+    if (!code) {
+      start.line = selection!.startLineNumber;
+      end.line = selection!.endLineNumber;
+
+      start.column = isEmpty ? 1 : selection!.startColumn;
+      end.column = isEmpty ? allLines[selection!.startLineNumber - 1].length + 1 : selection!.endColumn;
+    } else {
+      start.line = 1;
+      end.line = allLines.length;
+
+      start.column = 1;
+      end.column = allLines[allLines.length - 1].length + 1;
+    }
+
+    const selected = model?.getValueInRange(new monaco.Range(start.line, start.column, end.line, end.column)) ?? "";
+    const selectedLines = selected.split("\n");
+
+    const blocks = getCodeBlocks(!code && !isEmpty ? selectedLines : allLines);
+
+    const lines = selectedLines
+      .map((text, i) => {
+        const lineNumber = i + 1;
+        const block = blocks.find((x) => x[0] <= lineNumber && x[1] >= lineNumber);
+
+        // If it is not a block, then just return the line
+        if (!block) {
+          // Ignore whitespace lines outside blocks
+          if (text.trim().length === 0) {
+            return [];
+          }
+
+          return [text];
+        }
+
+        const [blockStart, blockEnd] = block;
+
+        // If it is not the block start, then ignore to avoid duplicating the lines
+        if (blockStart !== lineNumber) {
+          return [];
+        }
+
+        return [...Array(blockEnd - blockStart + 1)].map((_, j) => selectedLines[i + j]);
+      })
+      .filter((x) => x.length > 0);
+
+    // Execute first block
+    this.executeLines(lines[0]);
+
+    // Add to the queue the rest
+    this.queue.push(...lines.slice(1));
   }
 
   async runAll() {

@@ -47,9 +47,10 @@ const operators = [
 
 type BlockType = (typeof blockTypes)[number];
 type BlockName = BlockType["name"] | "operator";
+export type CodeBlock = [number, number, BlockName];
 
-export const getCodeBlocks = (lines: string[]): [number, number, BlockName][] => {
-  const blocks = [] as [number, number, BlockName][];
+export const getCodeBlocks = (lines: string[]): CodeBlock[] => {
+  const blocks = [] as CodeBlock[];
 
   const state = {
     current: null as BlockType | null,

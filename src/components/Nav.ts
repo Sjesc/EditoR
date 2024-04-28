@@ -33,9 +33,11 @@ export class Nav {
     localStorage.setItem("theme", theme);
   }
 
-  setupButtons(runCode: (code?: string[]) => any, runAll: () => any) {
-    this.runButton.addEventListener("click", runCode.bind(this, undefined));
-    this.runAllButton.addEventListener("click", runAll);
+  getButtons() {
+    return {
+      runAll: this.runAllButton,
+      run: this.runButton,
+    };
   }
 
   toggleButtons(state: boolean) {
@@ -54,7 +56,7 @@ export class Nav {
           id="${components.runAll}"
           class="bg-green-600  flex items-center gap-x-1 disabled:bg-red-500 disabled:opacity-50"
         >
-          Run all <span class="text-xs opacity-80">(Ctrl+Shift+Enter)</span>
+          Run all <span class="text-xs opacity-80">(Ctrl+Alt+Enter)</span>
         </button>
 
         <div class="ml-auto flex gap-x-1 items-center">
