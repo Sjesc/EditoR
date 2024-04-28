@@ -95,6 +95,7 @@ export class Console {
 
       switch (output.type) {
         case "stdout":
+          console.log("stdout", output.data);
           this.insertConsoleLine(output.data, "");
           break;
         case "stderr":
@@ -153,8 +154,6 @@ export class Console {
       return;
     }
 
-    console.log("code", code);
-
     const model = this.editor.getModel();
     const allLines = model?.getLinesContent() ?? [];
     const selection = this.editor.getSelection();
@@ -184,7 +183,7 @@ export class Console {
 
     const lines = selectedLines
       .map((text, i) => {
-        const lineNumber = i + 1;
+        const lineNumber = isEmpty ? i + start.line : i + 1;
         const block = blocks.find((x) => x[0] <= lineNumber && x[1] >= lineNumber);
 
         // If it is not a block, then just return the line
@@ -200,8 +199,13 @@ export class Console {
         const [blockStart, blockEnd] = block;
 
         // If it is not the block start, then ignore to avoid duplicating the lines
-        if (blockStart !== lineNumber) {
+        // ...Unless it is a single line selection
+        if (blockStart !== lineNumber && !isEmpty) {
           return [];
+        }
+
+        if (isEmpty) {
+          return [...Array(blockEnd - blockStart + 1)].map((_, j) => allLines[blockStart + j - 1]);
         }
 
         return [...Array(blockEnd - blockStart + 1)].map((_, j) => selectedLines[i + j]);
@@ -223,7 +227,7 @@ export class Console {
 
   insertConsoleLine(text: string, prefix: string = "&gt;", color?: string) {
     this.console.innerHTML += html`<div class="monaco-component" ${styles({ color: color ?? "inherit" })}>
-      <span class="opacity-40 select-none mr-1">${prefix}</span>${text}
+      <span class="opacity-40 select-none mr-1">${prefix}</span>${text.replace(/\s/g, "&nbsp;")}
     </div>`;
 
     setTimeout(() => {
