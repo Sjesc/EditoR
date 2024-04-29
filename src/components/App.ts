@@ -38,7 +38,7 @@ export class App {
 
   async init() {
     this.webR = new WebR({
-      baseUrl: `${import.meta.env.BASE_URL}/public/webR/`,
+      baseUrl: `${import.meta.env.BASE_URL}public/webR/`,
     });
     await this.webR.init();
 
