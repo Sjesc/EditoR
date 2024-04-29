@@ -1,3 +1,4 @@
+//@ts-ignore
 import { WebR } from "webr";
 import { components, getComponent } from "../common/components";
 import { getCodeBlocks, html, styles } from "../helpers";

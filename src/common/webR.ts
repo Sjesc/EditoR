@@ -1,3 +1,4 @@
+//@ts-ignore
 import { RFunction, Shelter, WebR } from "webr";
 
 const rFunctions = {

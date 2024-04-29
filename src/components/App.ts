@@ -1,3 +1,4 @@
+//@ts-ignore
 import { WebR } from "webr";
 import { html, styles } from "../helpers";
 import { Console } from "./Console";
@@ -19,6 +20,8 @@ export class App {
   private webR?: WebR;
   private editor?: Editor;
   private plots?: Plots;
+
+  //@ts-ignore
   private statusBar?: StatusBar;
   private enviroment?: Enviroment;
   private packages?: Packages;

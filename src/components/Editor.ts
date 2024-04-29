@@ -10,6 +10,7 @@ import cssWorker from "monaco-editor/esm/vs/language/css/css.worker?worker";
 import htmlWorker from "monaco-editor/esm/vs/language/html/html.worker?worker";
 import tsWorker from "monaco-editor/esm/vs/language/typescript/ts.worker?worker";
 
+//@ts-ignore
 import { RFunction, WebR } from "webr";
 import { getTokensProvider } from "../config/tokensProvider";
 import { getFnDefs } from "../common/webR";
