@@ -4,14 +4,16 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "updateWebRPackage": "shx cp webRPackage.json node_modules/webr/package.json",
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "npm run updateWebRPackage && tsc && vite build",
     "preview": "vite preview"
   },
   "devDependencies": {
     "@types/react": "^18.2.79",
     "autoprefixer": "^10.4.19",
     "postcss": "^8.4.38",
+    "shx": "^0.3.4",
     "typescript": "^5.2.2",
     "vite": "^5.2.0",
     "vite-plugin-pwa": "^0.19.8"
