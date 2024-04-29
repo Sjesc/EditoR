@@ -3,6 +3,9 @@ import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
   base: "/",
+  build: {
+    target: "esnext",
+  },
   plugins: [
     VitePWA({
       registerType: "autoUpdate",
