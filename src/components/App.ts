@@ -34,7 +34,9 @@ export class App {
   }
 
   async init() {
-    this.webR = new WebR();
+    this.webR = new WebR({
+      baseUrl: "/public/webR/",
+    });
     await this.webR.init();
 
     await this.webR.evalRVoid("webr::shim_install()");
